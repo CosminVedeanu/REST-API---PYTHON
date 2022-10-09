@@ -1,6 +1,6 @@
 # What this project is about
 
-Inside this project  I created a Class arhitecture within "api.py" which will be used to create my tests for "gorest.co.in" .
+Inside this project  I created a Class arhitecture within "api.py" which will be used to create my tests for "http://gorest.co.in" .
 
 # How to use
 1. Input the API base URL and the Authorization/Bearer Token in auth.py
