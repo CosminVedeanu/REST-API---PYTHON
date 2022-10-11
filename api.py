@@ -1,6 +1,8 @@
 import requests
 from auth import *
 from urllib.error import HTTPError
+from abc import abstractmethod
+import time
 
 
 class Api:
@@ -29,37 +31,63 @@ class Api:
         response = requests.post(self.API_URL, json=self.payload, headers=self.api_key)
         print('POST', response.json(), response.status_code, sep='\n')
         self.response = response
+        #Take a look later
+        if response.status_code == 429:
+            for i in range(0, 2):
+
+                time.sleep(10)
+                response = requests.post(self.API_URL, json=self.payload, headers=self.api_key)
+                print('POST', response.json(), response.status_code, sep='\n')
+                self.response = response
+
+                if response.status_code != 429:
+                    break
+
         if response.status_code == 422:
+            print(self.payload)
             raise HTTPError(url=self.API_URL, code=response.status_code, msg=response.json(), hdrs=self.api_key, fp='')
+
         self.id = response.json()['id']
         self.api_url_id = f'{self.API_URL}/{self.id}'
-        self.junk.append(self.api_url_id)
+        Api.junk.append(self.api_url_id)
 
     # PATCH
     def update(self):
         response = requests.patch(self.api_url_id, json=self.payload, headers=self.api_key)
         print('PATCH', response.json(), response.status_code, sep='\n')
         self.response = response
+        if response.status_code == 422:
+            print(self.payload)
+            raise HTTPError(url=self.API_URL, code=response.status_code, msg=response.json(), hdrs=self.api_key, fp='')
 
     # PUT
     def upgrade(self):
         response = requests.put(self.api_url_id, json=self.payload, headers=self.api_key)
         print('PUT', response.json(), response.status_code, sep='\n')
         self.response = response
+        if response.status_code == 422:
+            print(self.payload)
+            raise HTTPError(url=self.API_URL, code=response.status_code, msg=response.json(), hdrs=self.api_key, fp='')
 
     # DELETE
     def delete(self):
         response = requests.delete(self.api_url_id, headers=self.api_key)
         print('DELETE', response.status_code, sep='\n')
         self.response = response
+        if response.status_code == 404:
+            print(self.payload)
+            raise HTTPError(url=self.API_URL, code=response.status_code, msg=response.json(), hdrs=self.api_key, fp='')
 
-    def cleanup(self):
-        for i in range(0, len(self.junk)):
-            response = requests.delete(self.junk[i], headers=self.api_key)
-            print(f'ID:{self.junk[i]} removed!', response.status_code, sep='\n')
+    @staticmethod
+    def cleanup():
+        for i in range(0, len(Api.junk)):
+            response = requests.delete(Api.junk[i], headers=api_key)
+            print(f'ID:{Api.junk[i]} removed!', response.status_code, sep='\n')
 
     # PAYLOAD
-
+    @abstractmethod
+    def set_payload(self):
+        pass
 
 class Users(Api):
     API_URL = f'{base_url}users'
